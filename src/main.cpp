@@ -1,8 +1,4 @@
-#include <Windows.h>
-#include <WinUser.h>
-#include <iostream>
-#include <vector>
-
+#include "main.h"
 
 HWND getWindowFocus() {
     HWND hwnd = GetForegroundWindow();
@@ -10,10 +6,13 @@ HWND getWindowFocus() {
 }
 
 void SetWindowFocusAsMinimize(HWND hwnd) {
-    // set the focus to the specified window and minimize it
-    ShowWindow(hwnd, SW_RESTORE);
+    bool isWindowZoomed = IsZoomed(hwnd);
+    ShowWindow(hwnd, SW_SHOW);
     SetForegroundWindow(hwnd);
     SetFocus(hwnd);
+    if (isWindowZoomed) {
+        ShowWindow(hwnd, SW_MAXIMIZE);
+    }
 }
 
 std::vector<HWND> hwnds;
@@ -25,7 +24,6 @@ BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam) {
     }
     return TRUE; 
 }
-
 
 void focusAndMinimizeAllWindow(HWND hwndNow) {
     hwnds.clear();    
@@ -43,16 +41,10 @@ void focusAndMinimizeAllWindow(HWND hwndNow) {
 }
 
 int main(int argc,char* argv[]) {
-    // HWND hwnd = FindWindowA(NULL, "File Explorer");
-    // if(IsWindow(hwnd)) {
-    //     std::cout << "File Explorer window found!" << std::endl;
-    //     SetForegroundWindow(hwnd);
-    //     Sleep(3000);
-    //     ShowWindow(hwnd, SW_MINIMIZE);
-
-    // } else {
-    //     std::cout << "File Explorer window not found." << std::endl;
-    // }
+    std::string windowsFeaturesTittle[FEATURES_WINDOWS_PROGRAM_SIZE];
+    windowsFeaturesTittle[0] = "Program Manager";
+    windowsFeaturesTittle[1] = "Task Switching";
+    getAllWindowVisibleTitle();
 
     HWND hwndNow = getWindowFocus();
     focusAndMinimizeAllWindow(hwndNow);
@@ -60,7 +52,14 @@ int main(int argc,char* argv[]) {
         HWND SwitchWindow = GetForegroundWindow();
         char title[256];
         GetWindowTextA(SwitchWindow, title, sizeof(title));
-        if (GetForegroundWindow() != hwndNow && std::string(title) != std::string("Program Manager")) {
+        bool isWindowFeatures = false;
+        for (int i = 0; i < FEATURES_WINDOWS_PROGRAM_SIZE; i++)
+        {
+            if (windowsFeaturesTittle[i] == title) {
+                isWindowFeatures = true;   
+            }
+        } 
+        if (GetForegroundWindow() != hwndNow && !isWindowFeatures) {
             Sleep(100);
             hwndNow = getWindowFocus();
             focusAndMinimizeAllWindow(GetForegroundWindow());
@@ -68,4 +67,6 @@ int main(int argc,char* argv[]) {
         Sleep(16);
     }
     return 0;
+
+
 }
