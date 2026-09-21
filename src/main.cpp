@@ -1,35 +1,43 @@
 #include "main.h"
 
-HWND getWindowFocus() {
+HWND getWindowFocus()
+{
     HWND hwnd = GetForegroundWindow();
     return hwnd;
 }
 
-void SetWindowFocusAsMinimize(HWND hwnd) {
+void SetWindowFocusAsMinimize(HWND hwnd)
+{
     bool isWindowZoomed = IsZoomed(hwnd);
     ShowWindow(hwnd, SW_SHOW);
     SetForegroundWindow(hwnd);
     SetFocus(hwnd);
-    if (isWindowZoomed) {
+    if (isWindowZoomed)
+    {
         ShowWindow(hwnd, SW_MAXIMIZE);
     }
 }
 
 std::vector<HWND> hwnds;
-BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam) {
+BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
+{
     char title[256];
     GetWindowTextA(hwnd, title, sizeof(title));
-    if (IsWindowVisible(hwnd) && strlen(title) > 0 && title != std::string("Program Manager")) {
+    if (IsWindowVisible(hwnd) && strlen(title) > 0 && title != std::string("Program Manager"))
+    {
         hwnds.push_back(hwnd);
     }
-    return TRUE; 
+    return TRUE;
 }
 
-void focusAndMinimizeAllWindow(HWND hwndNow) {
-    hwnds.clear();    
+void focusAndMinimizeAllWindow(HWND hwndNow)
+{
+    hwnds.clear();
     EnumWindows(EnumWindowsProc, 0);
-    for (HWND hwnd : hwnds) {
-        if (hwnd != hwndNow) {
+    for (HWND hwnd : hwnds)
+    {
+        if (hwnd != hwndNow)
+        {
             ShowWindow(hwnd, SW_MINIMIZE);
         }
     }
@@ -40,7 +48,8 @@ void focusAndMinimizeAllWindow(HWND hwndNow) {
     SetWindowFocusAsMinimize(hwndNow);
 }
 
-int main(int argc,char* argv[]) {
+void mainLoop()
+{
     std::string windowsFeaturesTittle[FEATURES_WINDOWS_PROGRAM_SIZE];
     windowsFeaturesTittle[0] = "Program Manager";
     windowsFeaturesTittle[1] = "Task Switching";
@@ -48,25 +57,38 @@ int main(int argc,char* argv[]) {
 
     HWND hwndNow = getWindowFocus();
     focusAndMinimizeAllWindow(hwndNow);
-    while (true) {
+    while (true)
+    {
         HWND SwitchWindow = GetForegroundWindow();
         char title[256];
         GetWindowTextA(SwitchWindow, title, sizeof(title));
         bool isWindowFeatures = false;
         for (int i = 0; i < FEATURES_WINDOWS_PROGRAM_SIZE; i++)
         {
-            if (windowsFeaturesTittle[i] == title) {
-                isWindowFeatures = true;   
+            if (windowsFeaturesTittle[i] == title)
+            {
+                isWindowFeatures = true;
             }
-        } 
-        if (GetForegroundWindow() != hwndNow && !isWindowFeatures) {
+        }
+        if (GetForegroundWindow() != hwndNow && !isWindowFeatures)
+        {
             Sleep(100);
             hwndNow = getWindowFocus();
             focusAndMinimizeAllWindow(GetForegroundWindow());
         }
         Sleep(16);
     }
-    return 0;
+}
 
-
+int main(int argc, char *argv[])
+{
+    QApplication app(argc, argv);
+    QWidget window;
+    window.setWindowTitle("Stage Manager");
+    window.resize(400, 300);
+    window.show();
+    QThread* workerThread = QThread::create([]() {
+        mainLoop();
+    });
+     app.exec();
 }

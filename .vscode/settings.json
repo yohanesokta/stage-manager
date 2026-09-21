@@ -1,0 +1,7 @@
+{
+    "cmake.configureSettings": {
+        "CMAKE_PREFIX_PATH": "D:/Runtime/QT/msvc2022_64",
+        "cmake.generator": "Visual Studio 17 2022",
+        "cmake.platform": "x64"
+    }
+}
