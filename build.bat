@@ -24,4 +24,4 @@ if exist "%BUILD_DIR%\\Debug\\stagemanager.exe" (
     "%BUILD_DIR%\\stagemanager.exe"
 ) else (
     echo Executable not found. Build may have failed.
-)
+)

@@ -52,7 +52,7 @@ void ThumbnailWidget::paintEvent(QPaintEvent* event) {
     int w = width();
     int h = height();
 
-    // Center area for transformed thumbnail
+    
     qreal scale = m_hoverScale;
     int cardW = 140 * scale;
     int cardH = 95 * scale;
@@ -61,45 +61,45 @@ void ThumbnailWidget::paintEvent(QPaintEvent* event) {
 
     QRectF cardRect(cardX, cardY, cardW, cardH);
 
-    // Apply 3D perspective transformation
+    
     painter.save();
     painter.translate(cardRect.center());
 
     QTransform transform;
-    // Perspective rotation along Y axis (macOS Stage Manager tilt effect)
+    
     transform.rotate(-10, Qt::YAxis);
     transform.rotate(2, Qt::ZAxis);
     painter.setTransform(transform, true);
 
     QRectF localRect(-cardW / 2.0, -cardH / 2.0, cardW, cardH);
 
-    // Drop Shadow
+    
     QPainterPath shadowPath;
     shadowPath.addRoundedRect(localRect.translated(4, 6), 10, 10);
     painter.fillPath(shadowPath, QColor(0, 0, 0, 100));
 
-    // Thumbnail Rounded Border Clip Path
+    
     QPainterPath clipPath;
     clipPath.addRoundedRect(localRect, 10, 10);
 
-    // Background fill
+    
     painter.setClipPath(clipPath);
     painter.fillRect(localRect, QColor(30, 30, 35, 230));
 
-    // Render snapshot or mockup
+    
     if (!m_snapshot.isNull()) {
         painter.drawPixmap(localRect.toRect(), m_snapshot);
     } else {
-        // Fallback miniature window graphics
+        
         QRectF headerRect(localRect.x(), localRect.y(), localRect.width(), 18);
         painter.fillRect(headerRect, QColor(50, 50, 60, 240));
 
-        // Window control dots (● ● ●)
+        
         painter.setBrush(QColor(255, 95, 86)); painter.drawEllipse(QPointF(localRect.x() + 10, localRect.y() + 9), 3, 3);
         painter.setBrush(QColor(255, 189, 46)); painter.drawEllipse(QPointF(localRect.x() + 18, localRect.y() + 9), 3, 3);
         painter.setBrush(QColor(39, 201, 63));  painter.drawEllipse(QPointF(localRect.x() + 26, localRect.y() + 9), 3, 3);
 
-        // Content lines mockup
+        
         painter.setPen(QColor(140, 140, 160, 180));
         int lineY = localRect.y() + 28;
         for (int i = 0; i < 4; ++i) {
@@ -109,7 +109,7 @@ void ThumbnailWidget::paintEvent(QPaintEvent* event) {
         }
     }
 
-    // Active state border highlight
+    
     if (m_isActive) {
         painter.setClipping(false);
         QPen activePen(QColor(0, 150, 255, 230), 2.5);
@@ -124,7 +124,7 @@ void ThumbnailWidget::paintEvent(QPaintEvent* event) {
 
     painter.restore();
 
-    // Draw Application Icon Badge at bottom center/right
+    
     if (!m_icon.isNull()) {
         int iconSize = 24;
         int iconX = cardX + cardW - iconSize + 2;
@@ -132,7 +132,7 @@ void ThumbnailWidget::paintEvent(QPaintEvent* event) {
         m_icon.paint(&painter, QRect(iconX, iconY, iconSize, iconSize));
     }
 
-    // Draw window count badge if multiple windows in group
+    
     if (m_windowCount > 1) {
         QRect badgeRect(cardX - 4, cardY + cardH - 18, 20, 20);
         painter.setBrush(QColor(0, 122, 255));

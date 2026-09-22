@@ -42,7 +42,7 @@ void StagePanel::setupUi() {
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(5, 10, 5, 10);
 
-    // Main translucent panel container
+    
     QWidget* container = new QWidget(this);
     container->setObjectName("container");
     container->setStyleSheet("#container { background-color: rgba(15, 15, 20, 0.75); border-radius: 18px; border: 1px solid rgba(255, 255, 255, 0.12); }");
@@ -67,7 +67,7 @@ void StagePanel::setupUi() {
 
     mainLayout->addWidget(container);
 
-    // Drop shadow effect
+    
     QGraphicsDropShadowEffect* shadow = new QGraphicsDropShadowEffect(this);
     shadow->setBlurRadius(25);
     shadow->setColor(QColor(0, 0, 0, 180));
@@ -84,7 +84,7 @@ void StagePanel::setupNativeWindowFlags() {
     HWND hwnd = getHwnd();
     if (hwnd) {
         LONG exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
-        // WS_EX_NOACTIVATE ensures clicking panel does not steal focus from active app window!
+        
         SetWindowLong(hwnd, GWL_EXSTYLE, exStyle | WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW);
     }
 #endif
@@ -118,7 +118,7 @@ void StagePanel::updatePanelPosition() {
 void StagePanel::updateRecentGroups() {
     if (!m_core) return;
 
-    // Clear layout
+    
     QLayoutItem* item;
     while ((item = m_listLayout->takeAt(0)) != nullptr) {
         if (item->widget()) {
@@ -133,7 +133,7 @@ void StagePanel::updateRecentGroups() {
     for (const auto& group : groups) {
         bool isActive = (group.id == activeId);
 
-        // Fetch or capture window snapshot pixmap
+        
         QPixmap snapshot;
         if (!group.hwnds.empty()) {
             HWND h = group.hwnds.front();

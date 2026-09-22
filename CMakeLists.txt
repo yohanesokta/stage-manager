@@ -6,11 +6,9 @@ project(${PROJECT_NAME} VERSION 1.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# Build type and output directory
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
-# Include source and UI directories
 include_directories(${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/ui)
 
 set(CMAKE_AUTOMOC ON)
@@ -19,7 +17,9 @@ set(CMAKE_AUTORCC ON)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(Qt6_DIR "D:/QT/6.11.2/msvc2022_64/lib/cmake/Qt6")
+if(DEFINED ENV{QT_PATH} AND NOT DEFINED CMAKE_PREFIX_PATH)
+    set(CMAKE_PREFIX_PATH "$ENV{QT_PATH}")
+endif()
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Gui Core)
 
@@ -47,3 +47,21 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     shell32
     gdi32
 )
+
+if(WIN32)
+    if(TARGET Qt6::windeployqt)
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND Qt6::windeployqt "$<TARGET_FILE:${PROJECT_NAME}>"
+            COMMENT "Running windeployqt to copy required Qt DLLs..."
+        )
+    else()
+        include(GNUInstallDirs)
+        if(COMMAND qt_generate_deploy_app_script)
+            qt_generate_deploy_app_script(
+                TARGET ${PROJECT_NAME}
+                OUTPUT_SCRIPT deploy_script
+            )
+            install(SCRIPT ${deploy_script})
+        endif()
+    endif()
+endif()
