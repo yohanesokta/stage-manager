@@ -34,6 +34,8 @@ add_executable(${PROJECT_NAME}
     ui/dock.cpp
     ui/StagePanel.h
     ui/StagePanel.cpp
+    ui/ThumbnailWidget.h
+    ui/ThumbnailWidget.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE 
@@ -43,4 +45,5 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     dwmapi
     user32
     shell32
+    gdi32
 )

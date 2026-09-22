@@ -44,6 +44,7 @@ public:
     static bool isUserWindow(HWND hwnd, HWND selfHwnd = nullptr);
     static WindowState captureWindowState(HWND hwnd);
     static QIcon getWindowIcon(HWND hwnd);
+    static QPixmap captureWindowSnapshot(HWND hwnd, QSize targetSize = QSize(280, 200));
     static QString getProcessName(DWORD pid);
 
     std::vector<WindowState> getTopLevelWindows(HWND selfHwnd = nullptr);

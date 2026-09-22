@@ -8,29 +8,9 @@
 #include <QTimer>
 #include <QLabel>
 #include <QPushButton>
-#include <QDragEnterEvent>
-#include <QDropEvent>
+#include <QMap>
+#include "ThumbnailWidget.h"
 #include "../src/StageManagerCore.h"
-
-class GroupTileWidget : public QWidget {
-    Q_OBJECT
-public:
-    explicit GroupTileWidget(const AppGroup& group, bool isActive, QWidget* parent = nullptr);
-
-    QString groupId() const { return m_groupId; }
-
-signals:
-    void clicked(const QString& groupId);
-
-protected:
-    void mousePressEvent(QMouseEvent* event) override;
-    void enterEvent(QEnterEvent* event) override;
-    void leaveEvent(QEvent* event) override;
-
-private:
-    QString m_groupId;
-    bool m_isActive = false;
-};
 
 class StagePanel : public QWidget {
     Q_OBJECT
@@ -70,6 +50,8 @@ private:
     QPropertyAnimation* m_slideAnimation = nullptr;
     QRect m_visibleRect;
     QRect m_hiddenRect;
+
+    QMap<HWND, QPixmap> m_snapshotCache;
 };
 
 #endif // STAGE_PANEL_H

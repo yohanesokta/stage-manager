@@ -34,7 +34,7 @@ void CALLBACK WindowManager::winEventProc(HWINEVENTHOOK hWinEventHook, DWORD eve
 
     if (s_instance && hwnd) {
         if (event == EVENT_SYSTEM_FOREGROUND) {
-            // Queue to main Qt GUI thread safely
+            
             QMetaObject::invokeMethod(s_instance, [hwnd]() {
                 emit s_instance->foregroundWindowChanged(hwnd);
             }, Qt::QueuedConnection);
@@ -66,32 +66,32 @@ bool WindowManager::isUserWindow(HWND hwnd, HWND selfHwnd) {
     if (!hwnd || !IsWindow(hwnd)) return false;
     if (hwnd == selfHwnd) return false;
 
-    // Check visibility
+    
     if (!IsWindowVisible(hwnd)) return false;
 
-    // Exclude windows owned by this process
+    
     DWORD pid = 0;
     GetWindowThreadProcessId(hwnd, &pid);
     if (pid == GetCurrentProcessId()) return false;
 
-    // Styles filtering
+    
     LONG exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
     LONG style = GetWindowLong(hwnd, GWL_STYLE);
 
-    // Tool windows are excluded unless explicitly WS_EX_APPWINDOW
+    
     if ((exStyle & WS_EX_TOOLWINDOW) && !(exStyle & WS_EX_APPWINDOW)) {
         return false;
     }
 
-    // Must be top-level without WS_CHILD
+    
     if (style & WS_CHILD) return false;
 
-    // Check title length
+    
     wchar_t title[256];
     int len = GetWindowTextW(hwnd, title, 256);
     if (len == 0) return false;
 
-    // Filter known system classes & titles
+    
     wchar_t className[256];
     GetClassNameW(hwnd, className, 256);
     QString cls = QString::fromWCharArray(className);
@@ -104,13 +104,13 @@ bool WindowManager::isUserWindow(HWND hwnd, HWND selfHwnd) {
         return false;
     }
 
-    // Filter DWM cloaked windows
+    
     BOOL cloaked = FALSE;
     if (SUCCEEDED(DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED, &cloaked, sizeof(cloaked)))) {
         if (cloaked) return false;
     }
 
-    // Check window rectangle dimensions
+    
     RECT rc;
     if (GetWindowRect(hwnd, &rc)) {
         if ((rc.right - rc.left) <= 0 || (rc.bottom - rc.top) <= 0) {
@@ -186,6 +186,53 @@ QIcon WindowManager::getWindowIcon(HWND hwnd) {
     }
 
     return QIcon();
+}
+
+QPixmap WindowManager::captureWindowSnapshot(HWND hwnd, QSize targetSize) {
+    if (!hwnd || !IsWindow(hwnd)) return QPixmap();
+
+    RECT rc;
+    if (!GetWindowRect(hwnd, &rc)) return QPixmap();
+    int srcW = rc.right - rc.left;
+    int srcH = rc.bottom - rc.top;
+    if (srcW <= 0 || srcH <= 0) return QPixmap();
+
+    HDC hdcScreen = GetDC(NULL);
+    HDC hdcMem = CreateCompatibleDC(hdcScreen);
+    HBITMAP hbm = CreateCompatibleBitmap(hdcScreen, srcW, srcH);
+    HGDIOBJ hOld = SelectObject(hdcMem, hbm);
+
+    BOOL success = PrintWindow(hwnd, hdcMem, 0x00000002);
+    if (!success) {
+        success = PrintWindow(hwnd, hdcMem, 0);
+    }
+    if (!success) {
+        HDC hdcWin = GetWindowDC(hwnd);
+        if (hdcWin) {
+            BitBlt(hdcMem, 0, 0, srcW, srcH, hdcWin, 0, 0, SRCCOPY);
+            ReleaseDC(hwnd, hdcWin);
+            success = TRUE;
+        }
+    }
+
+    QPixmap result;
+    if (success) {
+        QImage image = QImage::fromHBITMAP(hbm);
+        if (!image.isNull()) {
+            if (!targetSize.isEmpty()) {
+                result = QPixmap::fromImage(image.scaled(targetSize, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+            } else {
+                result = QPixmap::fromImage(image);
+            }
+        }
+    }
+
+    SelectObject(hdcMem, hOld);
+    DeleteObject(hbm);
+    DeleteDC(hdcMem);
+    ReleaseDC(NULL, hdcScreen);
+
+    return result;
 }
 
 QString WindowManager::getProcessName(DWORD pid) {

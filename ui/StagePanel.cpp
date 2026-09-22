@@ -11,71 +11,6 @@
 #include <windows.h>
 #endif
 
-GroupTileWidget::GroupTileWidget(const AppGroup& group, bool isActive, QWidget* parent)
-    : QWidget(parent), m_groupId(group.id), m_isActive(isActive) {
-    setCursor(Qt::PointingHandCursor);
-    setFixedHeight(80);
-
-    QHBoxLayout* layout = new QHBoxLayout(this);
-    layout->setContentsMargins(10, 8, 10, 8);
-    layout->setSpacing(10);
-
-    // App Icon
-    QLabel* iconLabel = new QLabel(this);
-    iconLabel->setFixedSize(48, 48);
-    if (!group.icon.isNull()) {
-        iconLabel->setPixmap(group.icon.pixmap(48, 48));
-    } else {
-        iconLabel->setText("App");
-        iconLabel->setAlignment(Qt::AlignCenter);
-    }
-    layout->addWidget(iconLabel);
-
-    // App Info
-    QVBoxLayout* textLayout = new QVBoxLayout();
-    textLayout->setSpacing(2);
-    textLayout->setContentsMargins(0, 0, 0, 0);
-
-    QLabel* titleLabel = new QLabel(group.name, this);
-    titleLabel->setStyleSheet("color: white; font-weight: bold; font-size: 13px;");
-    titleLabel->setToolTip(group.name);
-    textLayout->addWidget(titleLabel);
-
-    if (group.hwnds.size() > 1) {
-        QLabel* countLabel = new QLabel(QString("%1 windows").arg(group.hwnds.size()), this);
-        countLabel->setStyleSheet("color: #AAAAAA; font-size: 11px;");
-        textLayout->addWidget(countLabel);
-    }
-
-    layout->addLayout(textLayout);
-    layout->addStretch();
-
-    // Active state styling
-    if (m_isActive) {
-        setStyleSheet("GroupTileWidget { background-color: rgba(255, 255, 255, 0.25); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.4); }"
-                      "GroupTileWidget:hover { background-color: rgba(255, 255, 255, 0.35); }");
-    } else {
-        setStyleSheet("GroupTileWidget { background-color: rgba(40, 40, 40, 0.6); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); }"
-                      "GroupTileWidget:hover { background-color: rgba(70, 70, 70, 0.8); }");
-    }
-}
-
-void GroupTileWidget::mousePressEvent(QMouseEvent* event) {
-    if (event->button() == Qt::LeftButton) {
-        emit clicked(m_groupId);
-    }
-    QWidget::mousePressEvent(event);
-}
-
-void GroupTileWidget::enterEvent(QEnterEvent* event) {
-    QWidget::enterEvent(event);
-}
-
-void GroupTileWidget::leaveEvent(QEvent* event) {
-    QWidget::leaveEvent(event);
-}
-
-// StagePanel Implementation
 StagePanel::StagePanel(StageManagerCore* core, QWidget* parent)
     : QWidget(parent, Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::Tool),
       m_core(core) {
@@ -102,23 +37,18 @@ HWND StagePanel::getHwnd() const {
 }
 
 void StagePanel::setupUi() {
-    setFixedWidth(200);
+    setFixedWidth(190);
 
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(12, 16, 12, 16);
+    mainLayout->setContentsMargins(5, 10, 5, 10);
 
-    // Main background card container
+    // Main translucent panel container
     QWidget* container = new QWidget(this);
     container->setObjectName("container");
-    container->setStyleSheet("#container { background-color: rgba(20, 20, 20, 0.85); border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.15); }");
+    container->setStyleSheet("#container { background-color: rgba(15, 15, 20, 0.75); border-radius: 18px; border: 1px solid rgba(255, 255, 255, 0.12); }");
 
     QVBoxLayout* containerLayout = new QVBoxLayout(container);
-    containerLayout->setContentsMargins(8, 12, 8, 12);
-
-    QLabel* headerLabel = new QLabel("Recent Apps", container);
-    headerLabel->setStyleSheet("color: #DDDDDD; font-weight: bold; font-size: 14px; margin-bottom: 8px;");
-    headerLabel->setAlignment(Qt::AlignCenter);
-    containerLayout->addWidget(headerLabel);
+    containerLayout->setContentsMargins(5, 10, 5, 10);
 
     m_scrollArea = new QScrollArea(container);
     m_scrollArea->setWidgetResizable(true);
@@ -129,7 +59,7 @@ void StagePanel::setupUi() {
     QWidget* scrollWidget = new QWidget(m_scrollArea);
     m_listLayout = new QVBoxLayout(scrollWidget);
     m_listLayout->setContentsMargins(0, 0, 0, 0);
-    m_listLayout->setSpacing(10);
+    m_listLayout->setSpacing(12);
     m_listLayout->addStretch();
 
     m_scrollArea->setWidget(scrollWidget);
@@ -139,9 +69,9 @@ void StagePanel::setupUi() {
 
     // Drop shadow effect
     QGraphicsDropShadowEffect* shadow = new QGraphicsDropShadowEffect(this);
-    shadow->setBlurRadius(20);
-    shadow->setColor(QColor(0, 0, 0, 160));
-    shadow->setOffset(4, 0);
+    shadow->setBlurRadius(25);
+    shadow->setColor(QColor(0, 0, 0, 180));
+    shadow->setOffset(5, 0);
     container->setGraphicsEffect(shadow);
 
     m_slideAnimation = new QPropertyAnimation(this, "geometry", this);
@@ -171,11 +101,11 @@ void StagePanel::updatePanelPosition() {
     if (screen) {
         QRect screenGeometry = screen->availableGeometry();
         int panelWidth = width();
-        int panelHeight = screenGeometry.height() - 80;
-        int yPos = screenGeometry.top() + 40;
+        int panelHeight = screenGeometry.height() - 60;
+        int yPos = screenGeometry.top() + 30;
 
-        m_visibleRect = QRect(screenGeometry.left() + 10, yPos, panelWidth, panelHeight);
-        m_hiddenRect = QRect(screenGeometry.left() - panelWidth + 5, yPos, panelWidth, panelHeight);
+        m_visibleRect = QRect(screenGeometry.left() + 5, yPos, panelWidth, panelHeight);
+        m_hiddenRect = QRect(screenGeometry.left() - panelWidth + 3, yPos, panelWidth, panelHeight);
 
         if (m_isShown) {
             setGeometry(m_visibleRect);
@@ -202,8 +132,24 @@ void StagePanel::updateRecentGroups() {
 
     for (const auto& group : groups) {
         bool isActive = (group.id == activeId);
-        GroupTileWidget* tile = new GroupTileWidget(group, isActive, m_scrollArea->widget());
-        connect(tile, &GroupTileWidget::clicked, this, &StagePanel::onTileClicked);
+
+        // Fetch or capture window snapshot pixmap
+        QPixmap snapshot;
+        if (!group.hwnds.empty()) {
+            HWND h = group.hwnds.front();
+            if (isActive || !m_snapshotCache.contains(h)) {
+                QPixmap cap = WindowManager::captureWindowSnapshot(h, QSize(260, 180));
+                if (!cap.isNull()) {
+                    m_snapshotCache[h] = cap;
+                }
+            }
+            if (m_snapshotCache.contains(h)) {
+                snapshot = m_snapshotCache[h];
+            }
+        }
+
+        ThumbnailWidget* tile = new ThumbnailWidget(group, snapshot, isActive, m_scrollArea->widget());
+        connect(tile, &ThumbnailWidget::clicked, this, &StagePanel::onTileClicked);
         m_listLayout->addWidget(tile);
     }
 
