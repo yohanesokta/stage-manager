@@ -4,7 +4,6 @@
 #include <QPainter>
 #include <QMouseEvent>
 #include <QCursor>
-#include <QGraphicsDropShadowEffect>
 #include <QDebug>
 
 #ifdef _WIN32
@@ -37,29 +36,30 @@ HWND StagePanel::getHwnd() const {
 }
 
 void StagePanel::setupUi() {
-    setFixedWidth(190);
+    setFixedWidth(175);
 
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(5, 10, 5, 10);
+    mainLayout->setContentsMargins(0, 0, 0, 0);
 
-    
+    // Completely transparent container so thumbnails float directly over desktop wallpaper
     QWidget* container = new QWidget(this);
     container->setObjectName("container");
-    container->setStyleSheet("#container { background-color: rgba(15, 15, 20, 0.75); border-radius: 18px; border: 1px solid rgba(255, 255, 255, 0.12); }");
+    container->setStyleSheet("#container { background: transparent; border: none; }");
 
     QVBoxLayout* containerLayout = new QVBoxLayout(container);
-    containerLayout->setContentsMargins(5, 10, 5, 10);
+    containerLayout->setContentsMargins(0, 5, 0, 5);
 
     m_scrollArea = new QScrollArea(container);
     m_scrollArea->setWidgetResizable(true);
     m_scrollArea->setFrameShape(QFrame::NoFrame);
     m_scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    m_scrollArea->setStyleSheet("QScrollArea { background: transparent; } QWidget { background: transparent; }");
+    m_scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_scrollArea->setStyleSheet("QScrollArea { background: transparent; border: none; } QWidget { background: transparent; }");
 
     QWidget* scrollWidget = new QWidget(m_scrollArea);
     m_listLayout = new QVBoxLayout(scrollWidget);
     m_listLayout->setContentsMargins(0, 0, 0, 0);
-    m_listLayout->setSpacing(12);
+    m_listLayout->setSpacing(14);
     m_listLayout->addStretch();
 
     m_scrollArea->setWidget(scrollWidget);
@@ -67,15 +67,8 @@ void StagePanel::setupUi() {
 
     mainLayout->addWidget(container);
 
-    
-    QGraphicsDropShadowEffect* shadow = new QGraphicsDropShadowEffect(this);
-    shadow->setBlurRadius(25);
-    shadow->setColor(QColor(0, 0, 0, 180));
-    shadow->setOffset(5, 0);
-    container->setGraphicsEffect(shadow);
-
     m_slideAnimation = new QPropertyAnimation(this, "geometry", this);
-    m_slideAnimation->setDuration(250);
+    m_slideAnimation->setDuration(220);
     m_slideAnimation->setEasingCurve(QEasingCurve::OutCubic);
 }
 
@@ -84,7 +77,7 @@ void StagePanel::setupNativeWindowFlags() {
     HWND hwnd = getHwnd();
     if (hwnd) {
         LONG exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
-        
+        // WS_EX_NOACTIVATE ensures clicking panel does not steal focus from active app window!
         SetWindowLong(hwnd, GWL_EXSTYLE, exStyle | WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW);
     }
 #endif
@@ -101,11 +94,11 @@ void StagePanel::updatePanelPosition() {
     if (screen) {
         QRect screenGeometry = screen->availableGeometry();
         int panelWidth = width();
-        int panelHeight = screenGeometry.height() - 60;
-        int yPos = screenGeometry.top() + 30;
+        int panelHeight = screenGeometry.height() - 40;
+        int yPos = screenGeometry.top() + 20;
 
-        m_visibleRect = QRect(screenGeometry.left() + 5, yPos, panelWidth, panelHeight);
-        m_hiddenRect = QRect(screenGeometry.left() - panelWidth + 3, yPos, panelWidth, panelHeight);
+        m_visibleRect = QRect(screenGeometry.left() + 2, yPos, panelWidth, panelHeight);
+        m_hiddenRect = QRect(screenGeometry.left() - panelWidth + 2, yPos, panelWidth, panelHeight);
 
         if (m_isShown) {
             setGeometry(m_visibleRect);
@@ -118,7 +111,7 @@ void StagePanel::updatePanelPosition() {
 void StagePanel::updateRecentGroups() {
     if (!m_core) return;
 
-    
+    // Clear layout
     QLayoutItem* item;
     while ((item = m_listLayout->takeAt(0)) != nullptr) {
         if (item->widget()) {
@@ -133,7 +126,7 @@ void StagePanel::updateRecentGroups() {
     for (const auto& group : groups) {
         bool isActive = (group.id == activeId);
 
-        
+        // Fetch or capture window snapshot pixmap
         QPixmap snapshot;
         if (!group.hwnds.empty()) {
             HWND h = group.hwnds.front();
