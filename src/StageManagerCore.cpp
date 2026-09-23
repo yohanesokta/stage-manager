@@ -1,4 +1,5 @@
 #include "StageManagerCore.h"
+#include <QTimer>
 #include <QDebug>
 
 StageManagerCore::StageManagerCore(WindowManager* winManager, QObject* parent)
@@ -9,6 +10,10 @@ StageManagerCore::StageManagerCore(WindowManager* winManager, QObject* parent)
         connect(m_winManager, &WindowManager::windowDestroyedOrHidden,
                 this, &StageManagerCore::onWindowDestroyedOrHidden);
     }
+
+    m_pruneTimer = new QTimer(this);
+    connect(m_pruneTimer, &QTimer::timeout, this, &StageManagerCore::pruneClosedWindows);
+    m_pruneTimer->start(600);
 }
 
 StageManagerCore::~StageManagerCore() {}
@@ -75,7 +80,42 @@ void StageManagerCore::onForegroundWindowChanged(HWND hwnd) {
 void StageManagerCore::onWindowDestroyedOrHidden(HWND hwnd) {
     Q_UNUSED(hwnd);
     if (m_state != StageState::Idle) return;
-    refreshWindows();
+    pruneClosedWindows();
+}
+
+void StageManagerCore::pruneClosedWindows() {
+    if (m_state != StageState::Idle) return;
+
+    bool changed = false;
+
+    auto groupIt = m_recentGroups.begin();
+    while (groupIt != m_recentGroups.end()) {
+        auto hwndIt = groupIt->hwnds.begin();
+        while (hwndIt != groupIt->hwnds.end()) {
+            HWND h = *hwndIt;
+            if (!IsWindow(h) || !WindowManager::isUserWindow(h, m_selfHwnd)) {
+                hwndIt = groupIt->hwnds.erase(hwndIt);
+                m_savedStates.remove(h);
+                changed = true;
+            } else {
+                ++hwndIt;
+            }
+        }
+
+        if (groupIt->hwnds.empty()) {
+            if (groupIt->id == m_activeGroupId) {
+                m_activeGroupId.clear();
+            }
+            groupIt = m_recentGroups.erase(groupIt);
+            changed = true;
+        } else {
+            ++groupIt;
+        }
+    }
+
+    if (changed) {
+        emit recentGroupsUpdated();
+    }
 }
 
 void StageManagerCore::updateGroupsAndBackground(HWND foregroundHwnd) {

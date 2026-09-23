@@ -2,7 +2,6 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QMouseEvent>
-#include <QGraphicsDropShadowEffect>
 #include <QDebug>
 
 ThumbnailWidget::ThumbnailWidget(const AppGroup& group, const QPixmap& snapshot, bool isActive, QWidget* parent)
@@ -64,7 +63,6 @@ void ThumbnailWidget::paintEvent(QPaintEvent* event) {
     // Render stacked group windows pushing backwards in 3D depth if multiple windows
     int stackCount = qMin(m_windowCount, 3);
     for (int i = stackCount - 1; i >= 1; --i) {
-        // Offset stacked background windows pushing up/right into depth
         int offsetX = i * 6;
         int offsetY = -i * 6;
         qreal depthScale = 1.0 - (i * 0.05);
@@ -79,12 +77,8 @@ void ThumbnailWidget::paintEvent(QPaintEvent* event) {
         QPainterPath backPath;
         backPath.addRoundedRect(backRect, 8, 8);
 
-        // Soft shadow for stacked card
-        QPainterPath backShadow;
-        backShadow.addRoundedRect(backRect.translated(2, 3), 8, 8);
-        painter.fillPath(backShadow, QColor(0, 0, 0, 40));
-
-        painter.fillPath(backPath, QColor(220, 225, 235, 210));
+        // Solid rounded card without shadow
+        painter.fillPath(backPath, QColor(220, 225, 235, 220));
         QPen stackPen(QColor(0, 0, 0, 40), 1.0);
         painter.setPen(stackPen);
         painter.drawRoundedRect(backRect, 8, 8);
@@ -92,11 +86,6 @@ void ThumbnailWidget::paintEvent(QPaintEvent* event) {
 
     // Main Window Thumbnail Card
     QRectF cardRect(mainX, mainY, baseW, baseH);
-
-    // Soft Drop Shadow floating over desktop
-    QPainterPath shadowPath;
-    shadowPath.addRoundedRect(cardRect.translated(2, 4), 9, 9);
-    painter.fillPath(shadowPath, QColor(0, 0, 0, 90));
 
     // Thumbnail Rounded Border Clip Path
     QPainterPath clipPath;
@@ -106,7 +95,7 @@ void ThumbnailWidget::paintEvent(QPaintEvent* event) {
     painter.setClipPath(clipPath);
 
     // Fill window background
-    painter.fillRect(cardRect, QColor(240, 243, 246, 245));
+    painter.fillRect(cardRect, QColor(240, 243, 246, 255));
 
     // Render Window Snapshot or fallback UI mockup
     if (!m_snapshot.isNull()) {
@@ -143,16 +132,11 @@ void ThumbnailWidget::paintEvent(QPaintEvent* event) {
         painter.drawRoundedRect(cardRect, 9, 9);
     }
 
-    // Draw Application Icon at BOTTOM-LEFT corner (overlapping bottom-left of thumbnail)
+    // Draw Application Icon at BOTTOM-LEFT corner (clean rounded icon without shadow)
     if (!m_icon.isNull()) {
         int iconSize = 28;
         int iconX = mainX - 8;
         int iconY = mainY + baseH - iconSize + 6;
-
-        // Soft shadow under icon
-        painter.setBrush(QColor(0, 0, 0, 50));
-        painter.setPen(Qt::NoPen);
-        painter.drawEllipse(iconX + 1, iconY + 2, iconSize, iconSize);
 
         m_icon.paint(&painter, QRect(iconX, iconY, iconSize, iconSize));
     }

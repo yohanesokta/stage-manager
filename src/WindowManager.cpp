@@ -47,19 +47,37 @@ void CALLBACK WindowManager::winEventProc(HWINEVENTHOOK hWinEventHook, DWORD eve
 }
 
 void WindowManager::startHook() {
-    if (m_hook) return;
-    m_hook = SetWinEventHook(
+    if (!m_hooks.empty()) return;
+
+    HWINEVENTHOOK hookFg = SetWinEventHook(
         EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND,
         NULL, WindowManager::winEventProc, 0, 0,
         WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS
     );
+    if (hookFg) m_hooks.push_back(hookFg);
+
+    HWINEVENTHOOK hookDestroy = SetWinEventHook(
+        EVENT_OBJECT_DESTROY, EVENT_OBJECT_DESTROY,
+        NULL, WindowManager::winEventProc, 0, 0,
+        WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS
+    );
+    if (hookDestroy) m_hooks.push_back(hookDestroy);
+
+    HWINEVENTHOOK hookHide = SetWinEventHook(
+        EVENT_OBJECT_HIDE, EVENT_OBJECT_HIDE,
+        NULL, WindowManager::winEventProc, 0, 0,
+        WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS
+    );
+    if (hookHide) m_hooks.push_back(hookHide);
 }
 
 void WindowManager::stopHook() {
-    if (m_hook) {
-        UnhookWinEvent(m_hook);
-        m_hook = nullptr;
+    for (HWINEVENTHOOK hook : m_hooks) {
+        if (hook) {
+            UnhookWinEvent(hook);
+        }
     }
+    m_hooks.clear();
 }
 
 bool WindowManager::isUserWindow(HWND hwnd, HWND selfHwnd) {

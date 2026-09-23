@@ -47,6 +47,7 @@ signals:
 private slots:
     void onForegroundWindowChanged(HWND hwnd);
     void onWindowDestroyedOrHidden(HWND hwnd);
+    void pruneClosedWindows();
 
 private:
     void updateGroupsAndBackground(HWND foregroundHwnd);
@@ -55,6 +56,7 @@ private:
 
     WindowManager* m_winManager = nullptr;
     HWND m_selfHwnd = nullptr;
+    QTimer* m_pruneTimer = nullptr;
 
     std::vector<AppGroup> m_recentGroups;
     QMap<HWND, WindowState> m_savedStates;

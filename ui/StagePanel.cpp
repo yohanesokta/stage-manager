@@ -41,13 +41,13 @@ void StagePanel::setupUi() {
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
 
-    // Completely transparent container so thumbnails float directly over desktop wallpaper
+    // Completely transparent container floating over desktop
     QWidget* container = new QWidget(this);
     container->setObjectName("container");
     container->setStyleSheet("#container { background: transparent; border: none; }");
 
     QVBoxLayout* containerLayout = new QVBoxLayout(container);
-    containerLayout->setContentsMargins(0, 5, 0, 5);
+    containerLayout->setContentsMargins(0, 0, 0, 0);
 
     m_scrollArea = new QScrollArea(container);
     m_scrollArea->setWidgetResizable(true);
@@ -58,9 +58,8 @@ void StagePanel::setupUi() {
 
     QWidget* scrollWidget = new QWidget(m_scrollArea);
     m_listLayout = new QVBoxLayout(scrollWidget);
-    m_listLayout->setContentsMargins(0, 0, 0, 0);
-    m_listLayout->setSpacing(14);
-    m_listLayout->addStretch();
+    m_listLayout->setContentsMargins(0, 5, 0, 35);
+    m_listLayout->setSpacing(12);
 
     m_scrollArea->setWidget(scrollWidget);
     containerLayout->addWidget(m_scrollArea);
@@ -146,7 +145,8 @@ void StagePanel::updateRecentGroups() {
         m_listLayout->addWidget(tile);
     }
 
-    m_listLayout->addStretch();
+    // Add padding space at bottom of scroll list so scrolling reaches bottom-most item completely
+    m_listLayout->addSpacing(35);
 }
 
 void StagePanel::updateActiveGroup(const QString& groupId) {
@@ -172,19 +172,43 @@ void StagePanel::checkMousePosition() {
     if (!screen) return;
 
     QRect screenGeo = screen->availableGeometry();
-    bool nearLeftEdge = (globalPos.x() <= screenGeo.left() + 15 &&
+
+    // Check if foreground active window touches/overlaps the left UI area
+    bool windowOverlapsUi = false;
+#ifdef _WIN32
+    HWND fgHwnd = GetForegroundWindow();
+    if (fgHwnd && WindowManager::isUserWindow(fgHwnd, getHwnd())) {
+        RECT rc;
+        if (GetWindowRect(fgHwnd, &rc) && !IsIconic(fgHwnd)) {
+            QRect fgRect(rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top);
+            if (fgRect.intersects(m_visibleRect)) {
+                windowOverlapsUi = true;
+            }
+        }
+    }
+#endif
+
+    bool nearLeftEdge = (globalPos.x() <= screenGeo.left() + 20 &&
                          globalPos.y() >= m_visibleRect.top() &&
                          globalPos.y() <= m_visibleRect.bottom());
 
     bool mouseOverPanel = m_visibleRect.contains(globalPos);
 
-    if (nearLeftEdge || mouseOverPanel) {
+    if (!windowOverlapsUi) {
+        // If NO window touches the Stage Manager UI area -> ALWAYS KEEP VISIBLE!
         if (!m_isShown) {
             setPanelVisible(true);
         }
     } else {
-        if (m_isShown) {
-            setPanelVisible(false);
+        // ONLY if a window overlaps/covers the Stage Manager UI area -> AUTO-HIDE unless hovered!
+        if (nearLeftEdge || mouseOverPanel) {
+            if (!m_isShown) {
+                setPanelVisible(true);
+            }
+        } else {
+            if (m_isShown) {
+                setPanelVisible(false);
+            }
         }
     }
 }

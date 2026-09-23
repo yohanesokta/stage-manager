@@ -63,7 +63,7 @@ signals:
 private:
     static void CALLBACK winEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd,
                                       LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
-    HWINEVENTHOOK m_hook = nullptr;
+    std::vector<HWINEVENTHOOK> m_hooks;
 };
 
 #endif // WINDOW_MANAGER_H
