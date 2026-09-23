@@ -1,4 +1,10 @@
-# HOW TO BUILD 
+# Stage Manager Windows
+
+On your Windows, use Stage Manager to keep the app you're working with front and centre, and your desktop clutter-free
+
+![thumbnail](./images/panel1.png)
+
+## How To Build!
 
 ### Requerements
 if you work on another outside msvc ex. msys (mingw) set manualy config.
