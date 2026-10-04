@@ -165,7 +165,7 @@ void StagePanel::onTileClicked(const QString& groupId) {
 }
 
 void StagePanel::checkMousePosition() {
-    if (!m_isAutoHide) return;
+    if (!isVisible() || !m_isAutoHide) return;
 
     QPoint globalPos = QCursor::pos();
     QScreen* screen = QGuiApplication::primaryScreen();

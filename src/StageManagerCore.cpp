@@ -16,7 +16,9 @@ StageManagerCore::StageManagerCore(WindowManager* winManager, QObject* parent)
     m_pruneTimer->start(600);
 }
 
-StageManagerCore::~StageManagerCore() {}
+StageManagerCore::~StageManagerCore() {
+    restoreAllWindows();
+}
 
 void StageManagerCore::refreshWindows() {
     if (!m_winManager) return;
@@ -175,7 +177,9 @@ void StageManagerCore::updateGroupsAndBackground(HWND foregroundHwnd) {
         }
 
         if (!isInActiveGroup && ws.hwnd != foregroundHwnd) {
-            if (!m_savedStates.contains(ws.hwnd)) {
+            if (!IsIconic(ws.hwnd)) {
+                m_savedStates[ws.hwnd] = WindowManager::captureWindowState(ws.hwnd);
+            } else if (!m_savedStates.contains(ws.hwnd)) {
                 m_savedStates[ws.hwnd] = ws;
             }
             m_winManager->hideWindow(ws.hwnd);
@@ -200,15 +204,17 @@ void StageManagerCore::switchToGroup(const QString& groupId) {
         for (HWND h : targetHwnds) {
             if (m_savedStates.contains(h)) {
                 m_winManager->restoreWindow(h, m_savedStates[h]);
+            } else {
+                m_winManager->activateWindow(h);
             }
-            m_winManager->activateWindow(h);
         }
     } else {
         HWND firstHwnd = targetHwnds.front();
         if (m_savedStates.contains(firstHwnd)) {
             m_winManager->restoreWindow(firstHwnd, m_savedStates[firstHwnd]);
+        } else {
+            m_winManager->activateWindow(firstHwnd);
         }
-        m_winManager->activateWindow(firstHwnd);
 
         if (group->hwnds.size() > 1) {
             HWND front = group->hwnds.front();
@@ -229,10 +235,22 @@ void StageManagerCore::switchToWindow(HWND hwnd) {
 
     if (m_savedStates.contains(hwnd)) {
         m_winManager->restoreWindow(hwnd, m_savedStates[hwnd]);
+    } else {
+        m_winManager->activateWindow(hwnd);
     }
-    m_winManager->activateWindow(hwnd);
     updateGroupsAndBackground(hwnd);
 
+    m_state = StageState::Idle;
+}
+
+void StageManagerCore::restoreAllWindows() {
+    m_state = StageState::Restoring;
+    for (auto it = m_savedStates.begin(); it != m_savedStates.end(); ++it) {
+        HWND h = it.key();
+        if (h && IsWindow(h)) {
+            m_winManager->restoreWindow(h, it.value());
+        }
+    }
     m_state = StageState::Idle;
 }
 

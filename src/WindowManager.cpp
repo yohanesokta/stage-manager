@@ -300,21 +300,23 @@ void WindowManager::restoreWindow(HWND hwnd, const WindowState& state) {
     if (state.isZoomed) {
         ShowWindow(hwnd, SW_SHOWMAXIMIZED);
     } else {
-        ShowWindow(hwnd, SW_RESTORE);
+        WINDOWPLACEMENT wp = state.placement;
+        wp.length = sizeof(WINDOWPLACEMENT);
+        wp.showCmd = SW_SHOWNORMAL;
+        wp.flags &= ~WPF_RESTORETOMAXIMIZED;
+        SetWindowPlacement(hwnd, &wp);
+        ShowWindow(hwnd, SW_SHOWNORMAL);
     }
+
+    SetForegroundWindow(hwnd);
+    SetFocus(hwnd);
 }
 
 void WindowManager::activateWindow(HWND hwnd) {
     if (!hwnd || !IsWindow(hwnd)) return;
 
     if (IsIconic(hwnd)) {
-        WINDOWPLACEMENT wp{ sizeof(WINDOWPLACEMENT) };
-        GetWindowPlacement(hwnd, &wp);
-        if (wp.flags & WPF_RESTORETOMAXIMIZED) {
-            ShowWindow(hwnd, SW_SHOWMAXIMIZED);
-        } else {
-            ShowWindow(hwnd, SW_RESTORE);
-        }
+        ShowWindow(hwnd, SW_RESTORE);
     } else {
         ShowWindow(hwnd, SW_SHOW);
     }

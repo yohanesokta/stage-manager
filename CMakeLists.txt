@@ -23,7 +23,7 @@ endif()
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Gui Core)
 
-add_executable(${PROJECT_NAME}
+add_executable(${PROJECT_NAME} WIN32
     src/main.cpp
     src/main.h
     src/WindowManager.h
@@ -36,6 +36,8 @@ add_executable(${PROJECT_NAME}
     ui/StagePanel.cpp
     ui/ThumbnailWidget.h
     ui/ThumbnailWidget.cpp
+    resources.qrc
+    resources.rc
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE 

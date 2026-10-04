@@ -30,6 +30,7 @@ public:
     void refreshWindows();
     void switchToGroup(const QString& groupId);
     void switchToWindow(HWND hwnd);
+    void restoreAllWindows();
 
     void groupWindows(HWND hwndA, HWND hwndB);
     void ungroupWindow(HWND hwnd);
